@@ -7,6 +7,8 @@ Try it out! A best-of-both-worlds optimizer with the generalization performance 
 
 The madgrad.py file containing the optimizer can be directly dropped into any PyTorch project. If you are using fairseq, you need the acompanying fairseq_madgrad.py file as well, which you can use with `--optimizer madgrad` command line option.
 
+Documentation availiable at https://madgrad.readthedocs.io/en/latest/.
+
 ## Things to note:
  - You may need to use a lower weight decay than you are accustomed to. Often 0.
  - You should do a full learning rate sweep as the optimal learning rate will be different from SGD or Adam. Best LR values we found were 2.5e-4 for 152 layer PreActResNet on CIFAR10, 0.001 for ResNet-50 on ImageNet, 0.025 for IWSLT14 using `transformer_iwslt_de_en` and 0.005 for RoBERTa training on BookWiki using `BERT_BASE`. On NLP models gradient clipping also helped.
