@@ -3,9 +3,11 @@
 
 A Momentumized, Adaptive, Dual Averaged Gradient Method for Stochastic Optimization
 
-Try it out! A best-of-both-worlds optimizer with the generalization performance of SGD and at least as fast convergence as that of Adam, often faster.
+``` pip install madgrad ```
 
-The madgrad.py file containing the optimizer can be directly dropped into any PyTorch project. If you are using fairseq, you need the acompanying fairseq_madgrad.py file as well, which you can use with `--optimizer madgrad` command line option.
+Try it out! A best-of-both-worlds optimizer with the generalization performance of SGD and at least as fast convergence as that of Adam, often faster. A drop-in torch.optim implementation `madgrad.MADGRAD` is provided, as well as a FairSeq wrapped instance. For FairSeq, just import madgrad anywhere in your project files and use the `--optimizer madgrad` command line option, together with `--weight-decay`, `--momentum`, and optionally `--madgrad_eps`.
+
+The madgrad.py file containing the optimizer can be directly dropped into any PyTorch project if you don't want to install via pip. If you are using fairseq, you need the acompanying fairseq_madgrad.py file as well.
 
 Documentation availiable at https://madgrad.readthedocs.io/en/latest/.
 
