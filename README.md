@@ -32,3 +32,6 @@ We introduce MADGRAD, a novel optimization method in the family of AdaGrad adapt
 ```
 
 
+# License
+
+MADGRAD is licensed under the [MIT License](LICENSE).
