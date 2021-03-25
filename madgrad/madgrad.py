@@ -86,9 +86,6 @@ class MADGRAD(torch.optim.Optimizer):
             self.state['k'] = torch.tensor([0], dtype=torch.long)
         k = self.state['k'].item()
 
-        if k % 100 == 0:
-            print(f"k: {k}")
-
         for group in self.param_groups:
             eps = group["eps"]
             lr = group["lr"] + eps
