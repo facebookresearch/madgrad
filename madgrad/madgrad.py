@@ -58,17 +58,8 @@ class MADGRAD(torch.optim.Optimizer):
         if eps < 0:
             raise ValueError(f"Eps must be non-negative")
 
-        defaults = dict(lr=lr, eps=eps, momentum=momentum, weight_decay=weight_decay, k=0)
+        defaults = dict(lr=lr, eps=eps, momentum=momentum, weight_decay=weight_decay)
         super().__init__(params, defaults)
-
-        for group in self.param_groups:
-            for p in group["params"]:
-                state = self.state[p]
-
-                state["grad_sum_sq"] = torch.zeros_like(p.data).detach()
-                state["s"] = torch.zeros_like(p.data).detach()
-                if momentum != 0:
-                    state["x0"] = torch.clone(p.data).detach()
 
     @property
     def supports_memory_efficient_fp16(self) -> bool:
@@ -89,9 +80,17 @@ class MADGRAD(torch.optim.Optimizer):
         if closure is not None:
             loss = closure()
 
+        # step counter must be stored in state to ensure correct behavior under
+        # optimizer sharding
+        if 'k' not in self.state:
+            self.state['k'] = torch.tensor([0], dtype=torch.long)
+        k = self.state['k'].item()
+
+        if k % 100 == 0:
+            print(f"k: {k}")
+
         for group in self.param_groups:
             eps = group["eps"]
-            k = group["k"]
             lr = group["lr"] + eps
             decay = group["weight_decay"]
             momentum = group["momentum"]
@@ -104,6 +103,12 @@ class MADGRAD(torch.optim.Optimizer):
                     continue
                 grad = p.grad.data
                 state = self.state[p]
+
+                if "grad_sum_sq" not in state:
+                    state["grad_sum_sq"] = torch.zeros_like(p.data).detach()
+                    state["s"] = torch.zeros_like(p.data).detach()
+                    if momentum != 0:
+                        state["x0"] = torch.clone(p.data).detach()
 
                 if momentum != 0.0 and grad.is_sparse:
                     raise RuntimeError("momentum != 0 is not compatible with sparse gradients")
@@ -169,5 +174,6 @@ class MADGRAD(torch.optim.Optimizer):
                         # p is a moving average of z
                         p.data.mul_(1 - ck).add_(z, alpha=ck)
 
-            group["k"] = group["k"] + 1
+
+        self.state['k'] += 1
         return loss
