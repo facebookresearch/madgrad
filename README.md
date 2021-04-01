@@ -1,5 +1,5 @@
 
-# MADGRAD Optimization method
+# MADGRAD Optimization Method
 
 A Momentumized, Adaptive, Dual Averaged Gradient Method for Stochastic Optimization
 
