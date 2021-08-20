@@ -35,8 +35,8 @@ We introduce MADGRAD, a novel optimization method in the family of AdaGrad adapt
 
 # Results
 
-![vision](https://github.com/facebookresearch/madgrad/blob/master/figures/vision.png?raw=true)
-![nlp](https://github.com/facebookresearch/madgrad/blob/master/figures/nlp.png?raw=true)
+![vision](https://github.com/facebookresearch/madgrad/blob/main/figures/vision.png?raw=true)
+![nlp](https://github.com/facebookresearch/madgrad/blob/main/figures/nlp.png?raw=true)
 
 # License
 
