@@ -64,7 +64,7 @@ class MADGRAD(torch.optim.Optimizer):
 
         self.decouple_decay = decouple_decay
 
-        defaults = dict(lr=lr, eps=eps, momentum=momentum, weight_decay=weight_decay, lamb_sum=0.0)
+        defaults = dict(lr=lr, eps=eps, momentum=momentum, weight_decay=weight_decay, lr_sum=0.0)
         super().__init__(params, defaults)
 
     @property
@@ -101,7 +101,7 @@ class MADGRAD(torch.optim.Optimizer):
             ck = 1 - momentum
             lamb = lr * math.pow(k + 1, 0.5)
 
-            lamb_sum = group["lamb_sum"] = group["lamb_sum"] + lamb
+            lr_sum = group["lr_sum"] = group["lr_sum"] + lr
 
             for p in group["params"]:
                 if p.grad is None:
@@ -186,7 +186,7 @@ class MADGRAD(torch.optim.Optimizer):
                         p.data.mul_(1 - ck).add_(z, alpha=ck)
                     
                     if decay != 0 and self.decouple_decay:
-                        p.data.div_(((lr)**(2/3))*(k+1)*decay+1)
+                        p.data.div_(lr_sum*decay+1)
 
 
         self.state['k'] += 1
