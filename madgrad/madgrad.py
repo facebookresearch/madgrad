@@ -44,6 +44,7 @@ class MADGRAD(torch.optim.Optimizer):
             Weight decay, i.e. a L2 penalty (default: 0).
         eps (float): 
             Term added to the denominator outside of the root operation to improve numerical stability. (default: 1e-6).
+            On problems with very small gradients, setting this to 0 may improve convergence.
     """
 
     def __init__(
@@ -139,6 +140,9 @@ class MADGRAD(torch.optim.Optimizer):
 
                     rms_masked_vals = grad_sum_sq_masked._values().pow_(1 / 3).add_(eps)
 
+                    if eps == 0:
+                        rms_masked_vals[rms_masked_vals == 0] = float('inf')
+
                     s.add_(grad, alpha=lamb)
                     s_masked._values().add_(grad_val, alpha=lamb)
 
@@ -158,6 +162,9 @@ class MADGRAD(torch.optim.Optimizer):
                     # Accumulate second moments
                     grad_sum_sq.addcmul_(grad, grad, value=lamb)
                     rms = grad_sum_sq.pow(1 / 3).add_(eps)
+
+                    if eps == 0:
+                        rms[rms == 0] = float('inf')
 
                     # Update s
                     s.data.add_(grad, alpha=lamb)
