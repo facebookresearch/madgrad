@@ -45,10 +45,13 @@ class MADGRAD(torch.optim.Optimizer):
         eps (float): 
             Term added to the denominator outside of the root operation to improve numerical stability. (default: 1e-6).
             On problems with very small gradients, setting this to 0 may improve convergence.
+        decouple_decay (bool):
+            Apply AdamW style decoupled weight decay, in explicit regularized dual averaging form (EXPERIMENTAL).
     """
 
     def __init__(
-        self, params: _params_t, lr: float = 1e-2, momentum: float = 0.9, weight_decay: float = 0, eps: float = 1e-6,
+        self, params: _params_t, lr: float = 1e-2, momentum: float = 0.9, 
+        weight_decay: float = 0, eps: float = 1e-6, decouple_decay=False,
     ):
         if momentum < 0 or momentum >= 1:
             raise ValueError(f"Momentum {momentum} must be in the range [0,1]")
@@ -59,7 +62,9 @@ class MADGRAD(torch.optim.Optimizer):
         if eps < 0:
             raise ValueError(f"Eps must be non-negative")
 
-        defaults = dict(lr=lr, eps=eps, momentum=momentum, weight_decay=weight_decay)
+        self.decouple_decay = decouple_decay
+
+        defaults = dict(lr=lr, eps=eps, momentum=momentum, weight_decay=weight_decay, lamb_sum=0.0)
         super().__init__(params, defaults)
 
     @property
@@ -96,6 +101,8 @@ class MADGRAD(torch.optim.Optimizer):
             ck = 1 - momentum
             lamb = lr * math.pow(k + 1, 0.5)
 
+            lamb_sum = group["lamb_sum"] = group["lamb_sum"] + lamb
+
             for p in group["params"]:
                 if p.grad is None:
                     continue
@@ -115,7 +122,7 @@ class MADGRAD(torch.optim.Optimizer):
                 s = state["s"]
 
                 # Apply weight decay
-                if decay != 0:
+                if decay != 0 and not self.decouple_decay:
                     if grad.is_sparse:
                         raise RuntimeError("weight_decay option is not compatible with sparse gradients")
 
@@ -177,6 +184,9 @@ class MADGRAD(torch.optim.Optimizer):
 
                         # p is a moving average of z
                         p.data.mul_(1 - ck).add_(z, alpha=ck)
+                    
+                    if decay != 0 and self.decouple_decay:
+                        p.data.div_(((lr)**(2/3))*(k+1)*decay+1)
 
 
         self.state['k'] += 1
