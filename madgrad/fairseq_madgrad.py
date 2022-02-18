@@ -54,6 +54,9 @@ if _has_fairseq:
                 Weight decay, i.e. a L2 penalty (default: 0).
             madgrad_eps (float): 
                 Term added to the denominator outside of the root operation to improve numerical stability. (default: 1e-6).
+            decouple_decay (bool):
+                Apply AdamW style decoupled weight decay (EXPERIMENTAL).
+
         """
 
         def __init__(self, args, params):
@@ -70,6 +73,8 @@ if _has_fairseq:
                                 help='momentum factor')
             parser.add_argument('--madgrad_eps', default=1e-6, type=float, metavar='M',
                                 help='Denominator epsilon')
+            parser.add_argument('--decouple_decay', default=False, type=bool, metavar='M',
+                                help='Decouple weight decay (EXPERIMENTAL)')
             # fmt: on
 
         @property
@@ -85,4 +90,5 @@ if _has_fairseq:
                 'momentum': self.args.momentum,
                 'weight_decay': self.args.weight_decay,
                 'eps': self.args.madgrad_eps,
+                'decouple_decay': self.args.decouple_decay,
             }
