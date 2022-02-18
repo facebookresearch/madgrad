@@ -47,6 +47,7 @@ class MADGRAD(torch.optim.Optimizer):
             On problems with very small gradients, setting this to 0 may improve convergence.
         decouple_decay (bool):
             Apply AdamW style decoupled weight decay (EXPERIMENTAL).
+
     """
 
     def __init__(
