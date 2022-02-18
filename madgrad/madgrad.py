@@ -46,7 +46,7 @@ class MADGRAD(torch.optim.Optimizer):
             Term added to the denominator outside of the root operation to improve numerical stability. (default: 1e-6).
             On problems with very small gradients, setting this to 0 may improve convergence.
         decouple_decay (bool):
-            Apply AdamW style decoupled weight decay, in explicit regularized dual averaging form (EXPERIMENTAL).
+            Apply AdamW style decoupled weight decay (EXPERIMENTAL).
     """
 
     def __init__(
@@ -64,7 +64,7 @@ class MADGRAD(torch.optim.Optimizer):
 
         self.decouple_decay = decouple_decay
 
-        defaults = dict(lr=lr, eps=eps, momentum=momentum, weight_decay=weight_decay, lr_sum=0.0)
+        defaults = dict(lr=lr, eps=eps, momentum=momentum, weight_decay=weight_decay)
         super().__init__(params, defaults)
 
     @property
@@ -100,8 +100,6 @@ class MADGRAD(torch.optim.Optimizer):
 
             ck = 1 - momentum
             lamb = lr * math.pow(k + 1, 0.5)
-
-            lr_sum = group["lr_sum"] = group["lr_sum"] + lr
 
             for p in group["params"]:
                 if p.grad is None:
@@ -176,6 +174,9 @@ class MADGRAD(torch.optim.Optimizer):
                     # Update s
                     s.data.add_(grad, alpha=lamb)
 
+                    if decay != 0 and self.decouple_decay:
+                        p_old = p.data.clone()
+
                     # Step
                     if momentum == 0:
                         p.data.copy_(x0.addcdiv(s, rms, value=-1))
@@ -186,7 +187,7 @@ class MADGRAD(torch.optim.Optimizer):
                         p.data.mul_(1 - ck).add_(z, alpha=ck)
                     
                     if decay != 0 and self.decouple_decay:
-                        p.data.div_(lr_sum*decay+1)
+                        p.data.add_(p_old, alpha=-lr*decay)
 
 
         self.state['k'] += 1
