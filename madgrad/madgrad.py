@@ -55,7 +55,7 @@ class MADGRAD(torch.optim.Optimizer):
         weight_decay: float = 0, eps: float = 1e-6, decouple_decay=False,
     ):
         if momentum < 0 or momentum >= 1:
-            raise ValueError(f"Momentum {momentum} must be in the range [0,1]")
+            raise ValueError(f"Momentum {momentum} must be in the range [0,1)")
         if lr <= 0:
             raise ValueError(f"Learning rate {lr} must be positive")
         if weight_decay < 0:
