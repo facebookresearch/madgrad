@@ -39,7 +39,7 @@ class MADGRAD(torch.optim.Optimizer):
         lr (float): 
             Learning rate (default: 1e-2).
         momentum (float): 
-            Momentum value in  the range [0,1) (default: 0.9).
+            Momentum value in the range [0,1) (default: 0.9).
         weight_decay (float): 
             Weight decay, i.e. a L2 penalty (default: 0).
         eps (float): 
