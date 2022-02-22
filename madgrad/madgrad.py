@@ -39,7 +39,7 @@ class MADGRAD(torch.optim.Optimizer):
         lr (float): 
             Learning rate (default: 1e-2).
         momentum (float): 
-            Momentum value in  the range [0,1) (default: 0.9).
+            Momentum value in the range [0,1) (default: 0.9).
         weight_decay (float): 
             Weight decay, i.e. a L2 penalty (default: 0).
         eps (float): 
@@ -55,7 +55,7 @@ class MADGRAD(torch.optim.Optimizer):
         weight_decay: float = 0, eps: float = 1e-6, decouple_decay=False,
     ):
         if momentum < 0 or momentum >= 1:
-            raise ValueError(f"Momentum {momentum} must be in the range [0,1]")
+            raise ValueError(f"Momentum {momentum} must be in the range [0,1)")
         if lr <= 0:
             raise ValueError(f"Learning rate {lr} must be positive")
         if weight_decay < 0:
