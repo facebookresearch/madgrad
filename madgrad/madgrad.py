@@ -63,9 +63,8 @@ class MADGRAD(torch.optim.Optimizer):
         if eps < 0:
             raise ValueError(f"Eps must be non-negative")
 
-        self.decouple_decay = decouple_decay
-
-        defaults = dict(lr=lr, eps=eps, momentum=momentum, weight_decay=weight_decay)
+        defaults = dict(lr=lr, eps=eps, momentum=momentum, 
+                        weight_decay=weight_decay, decouple_decay=decouple_decay)
         super().__init__(params, defaults)
 
     @property
@@ -98,6 +97,7 @@ class MADGRAD(torch.optim.Optimizer):
             lr = group["lr"] + eps
             decay = group["weight_decay"]
             momentum = group["momentum"]
+            decouple_decay = group["decouple_decay"]
 
             ck = 1 - momentum
             lamb = lr * math.pow(k + 1, 0.5)
@@ -121,7 +121,7 @@ class MADGRAD(torch.optim.Optimizer):
                 s = state["s"]
 
                 # Apply weight decay
-                if decay != 0 and not self.decouple_decay:
+                if decay != 0 and not decouple_decay:
                     if grad.is_sparse:
                         raise RuntimeError("weight_decay option is not compatible with sparse gradients")
 
@@ -175,7 +175,7 @@ class MADGRAD(torch.optim.Optimizer):
                     # Update s
                     s.data.add_(grad, alpha=lamb)
 
-                    if decay != 0 and self.decouple_decay:
+                    if decay != 0 and decouple_decay:
                         p_old = p.data.clone()
 
                     # Step
@@ -187,7 +187,7 @@ class MADGRAD(torch.optim.Optimizer):
                         # p is a moving average of z
                         p.data.mul_(1 - ck).add_(z, alpha=ck)
                     
-                    if decay != 0 and self.decouple_decay:
+                    if decay != 0 and decouple_decay:
                         p.data.add_(p_old, alpha=-lr*decay)
 
 
