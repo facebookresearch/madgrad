@@ -4,10 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-from typing import TYPE_CHECKING, Any, Callable, Optional
-
 import torch
 import torch.optim
+
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 if TYPE_CHECKING:
     from torch.optim.optimizer import _params_t
