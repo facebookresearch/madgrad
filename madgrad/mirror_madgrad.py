@@ -17,9 +17,41 @@ else:
     _params_t = Any
 
 class MirrorMADGRAD(torch.optim.Optimizer):
+    """
+    Mirror MADGRAD_: A Momentumized, Adaptive, Dual Averaged Gradient Method for Stochastic 
+    Optimization.
+
+    .. _MADGRAD: https://arxiv.org/abs/2101.11075
+
+    Mirror MADGRAD uses the weighting and momentum of MADGRAD but uses mirror descent
+    rather than dual averaging as the base method. In general, the mirror variant works 
+    better than standard MADGRAD on problems where generalization gap is not an issue, 
+    such as large Transformer model training. On CIFAR-10/Image-Net and smaller NLP models
+    the standard variant should be prefered. The Mirror variant is more numerically stable
+    which may help with large model training.
+    
+    Currently does not support sparse gradients.
+
+    Arguments:
+        params (iterable): 
+            Iterable of parameters to optimize or dicts defining parameter groups.
+        lr (float): 
+            Learning rate (default: 1e-2).
+        momentum (float): 
+            Momentum value in the range [0,1) (default: 0.9).
+        weight_decay (float): 
+            Weight decay, i.e. a L2 penalty (default: 0).
+        eps (float): 
+            Term added to the denominator outside of the root operation to improve numerical stability. (default: 0).
+            This parameter is less important in MADGRAD than in Adam. A value of 0 will likely give the best results.
+        decouple_decay (bool):
+            Apply AdamW style decoupled weight decay (EXPERIMENTAL). 
+            Application of decay occurs before the step.
+    """
+
     def __init__(
         self, params: _params_t, lr: float = 1e-2, momentum: float = 0.9, 
-        weight_decay: float = 0, madgrad_eps: float = 0, args = {}
+        weight_decay: float = 0, eps: float = 0, decouple_decay=False,
     ):
         if momentum < 0 or momentum >= 1:
             raise ValueError(f"Momentum {momentum} must be in the range [0,1]")
@@ -27,10 +59,11 @@ class MirrorMADGRAD(torch.optim.Optimizer):
             raise ValueError(f"Learning rate {lr} must be positive")
         if weight_decay < 0:
             raise ValueError(f"Weight decay {weight_decay} must be non-negative")
-        if madgrad_eps < 0:
+        if eps < 0:
             raise ValueError(f"Eps must be non-negative")
 
-        defaults = dict(lr=lr, eps=madgrad_eps, momentum=momentum, weight_decay=weight_decay)
+        defaults = dict(lr=lr, eps=eps, momentum=momentum, 
+            weight_decay=weight_decay, decouple_decay=decouple_decay)
         super().__init__(params, defaults)
 
     @property
@@ -66,6 +99,7 @@ class MirrorMADGRAD(torch.optim.Optimizer):
             lr = group["lr"] + eps
             decay = group["weight_decay"]
             momentum = group["momentum"]
+            decouple_decay = group["decouple_decay"]
 
             ck = 1 - momentum
 
@@ -97,7 +131,12 @@ class MirrorMADGRAD(torch.optim.Optimizer):
                     if grad.is_sparse:
                         raise RuntimeError("weight_decay option is not compatible with sparse gradients")
 
-                    grad.add_(p_data_fp32, alpha=decay)
+                    if decouple_decay:
+                        z.data.add_(z.data, alpha=-lr*decay)
+                    else:
+                        grad.add_(p_data_fp32, alpha=decay)
+                        
+
 
                 grad_sum_sq.mul_(update_ratio)
                 # Accumulate second moments

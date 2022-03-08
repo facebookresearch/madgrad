@@ -9,7 +9,11 @@ from .madgrad import MADGRAD
 
 try:
     import fairseq
-    from fairseq.optim import FairseqOptimizer, register_optimizer
+    from fairseq.optim import register_optimizer
+    try:
+        from fairseq.optim import FairseqOptimizer
+    except:
+        from fairseq.optim import LegacyFairseqOptimizer as FairseqOptimizer 
 except ImportError:
     _has_fairseq = False
 else:
@@ -41,11 +45,14 @@ if _has_fairseq:
             lr (float): 
                 Learning rate (default: 1e-2).
             momentum (float): 
-                Momentum value in  the range [0,1) (default: 0.9).
+                Momentum value in the range [0,1) (default: 0.9).
             weight_decay (float): 
                 Weight decay, i.e. a L2 penalty (default: 0).
             madgrad_eps (float): 
-                Term added to the denominator outside of the root operation to improve numerical stability. (default: 1e-6).
+                Term added to the denominator outside of the root operation to improve 
+                numerical stability. (default: 1e-6).
+                This parameter is less important in MADGRAD than in Adam. 
+                On problems with very small gradients, setting this to 0 will improve convergence.
             decouple_decay (bool):
                 Apply AdamW style decoupled weight decay (EXPERIMENTAL).
 

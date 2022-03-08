@@ -3,17 +3,24 @@
 
 A Momentumized, Adaptive, Dual Averaged Gradient Method for Stochastic Optimization
 
+Documentation availiable at https://madgrad.readthedocs.io/en/latest/.
+
+
 ``` pip install madgrad ```
 
 Try it out! A best-of-both-worlds optimizer with the generalization performance of SGD and at least as fast convergence as that of Adam, often faster. A drop-in torch.optim implementation `madgrad.MADGRAD` is provided, as well as a FairSeq wrapped instance. For FairSeq, just import madgrad anywhere in your project files and use the `--optimizer madgrad` command line option, together with `--weight-decay`, `--momentum`, and optionally `--madgrad_eps`.
 
 The madgrad.py file containing the optimizer can be directly dropped into any PyTorch project if you don't want to install via pip. If you are using fairseq, you need the acompanying fairseq_madgrad.py file as well.
 
-Documentation availiable at https://madgrad.readthedocs.io/en/latest/.
-
 ## Things to note:
  - You may need to use a lower weight decay than you are accustomed to. Often 0.
  - You should do a full learning rate sweep as the optimal learning rate will be different from SGD or Adam. Best LR values we found were 2.5e-4 for 152 layer PreActResNet on CIFAR10, 0.001 for ResNet-50 on ImageNet, 0.025 for IWSLT14 using `transformer_iwslt_de_en` and 0.005 for RoBERTa training on BookWiki using `BERT_BASE`. On NLP models gradient clipping also helped.
+
+# Mirror MADGRAD
+The mirror descent version of MADGRAD is also included as `madgrad.MirrorMADGRAD`. This version works extremely well, even better than MADGRAD, on large-scale transformer training. This version is recommended for any problem where the datasets are big enough that generalization gap is not an issue.
+
+As the mirror descent version does not implicitly regularize, you can usually use weight
+decay values that work well with other optimizers.
 
 # Tech Report
 
