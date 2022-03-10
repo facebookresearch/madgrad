@@ -70,7 +70,7 @@ if _has_fairseq:
                                 help='weight decay')
             parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                                 help='momentum factor')
-            parser.add_argument('--madgrad_eps', default=1e-6, type=float, metavar='M',
+            parser.add_argument('--eps', default=1e-6, type=float, metavar='M',
                                 help='Denominator epsilon')
             parser.add_argument('--decouple_decay', default=False, type=bool, metavar='M',
                                 help='Decouple weight decay (EXPERIMENTAL)')
@@ -88,6 +88,6 @@ if _has_fairseq:
                 'lr': self.args.lr[0],
                 'momentum': self.args.momentum,
                 'weight_decay': self.args.weight_decay,
-                'eps': self.args.madgrad_eps,
+                'eps': self.args.eps,
                 'decouple_decay': self.args.decouple_decay,
             }

@@ -47,7 +47,7 @@ if _has_fairseq:
                 Momentum value in the range [0,1) (default: 0.9).
             weight_decay (float): 
                 Weight decay, i.e. a L2 penalty (default: 0).
-            madgrad_eps (float): 
+            eps (float): 
                 Term added to the denominator outside of the root operation to improve numerical stability. (default: 0).
                 This parameter is less important in MADGRAD than in Adam. A value of 0 will likely give the best results.
             decouple_decay (bool):
@@ -67,7 +67,7 @@ if _has_fairseq:
                                 help='weight decay')
             parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                                 help='momentum factor')
-            parser.add_argument('--madgrad_eps', default=0, type=float, metavar='M',
+            parser.add_argument('--eps', default=0, type=float, metavar='M',
                                 help='Denominator epsilon')
             parser.add_argument('--decouple_decay', default=False, type=bool, metavar='M',
                                 help='Decouple weight decay (EXPERIMENTAL)')
@@ -85,6 +85,6 @@ if _has_fairseq:
                 'lr': self.args.lr[0],
                 'momentum': self.args.momentum,
                 'weight_decay': self.args.weight_decay,
-                'madgrad_eps': self.args.madgrad_eps,
+                'eps': self.args.eps,
                 'decouple_decay': self.args.decouple_decay,
             }
