@@ -11,9 +11,9 @@ try:
     import fairseq
     from fairseq.optim import register_optimizer
     try:
-        from fairseq.optim import FairseqOptimizer
-    except:
         from fairseq.optim import LegacyFairseqOptimizer as FairseqOptimizer 
+    except:
+        from fairseq.optim import FairseqOptimizer
 except ImportError:
     _has_fairseq = False
 else:
