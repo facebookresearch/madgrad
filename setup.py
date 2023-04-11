@@ -10,7 +10,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="madgrad",
-    version="1.2",
+    version="1.3",
     author="Aaron Defazio",
     author_email="adefazio@fb.com",
     description="A general purpose PyTorch Optimizer",

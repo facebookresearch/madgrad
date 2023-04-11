@@ -58,8 +58,8 @@ class MADGRAD(torch.optim.Optimizer):
     ):
         if momentum < 0 or momentum >= 1:
             raise ValueError(f"Momentum {momentum} must be in the range [0,1)")
-        if lr <= 0:
-            raise ValueError(f"Learning rate {lr} must be positive")
+        if lr < 0:
+            raise ValueError(f"Learning rate {lr} must be non-negative")
         if weight_decay < 0:
             raise ValueError(f"Weight decay {weight_decay} must be non-negative")
         if eps < 0:
@@ -71,7 +71,7 @@ class MADGRAD(torch.optim.Optimizer):
 
     @property
     def supports_memory_efficient_fp16(self) -> bool:
-        return False
+        return True
 
     @property
     def supports_flat_params(self) -> bool:
@@ -96,10 +96,12 @@ class MADGRAD(torch.optim.Optimizer):
 
         for group in self.param_groups:
             eps = group["eps"]
-            lr = group["lr"] + eps
+            lr = group["lr"]
+            if lr != 0.0:
+                lr = lr + eps # For stability
             decay = group["weight_decay"]
             momentum = group["momentum"]
-            decouple_decay = group["decouple_decay"]
+            decouple_decay = group.get("decouple_decay", False)
 
             ck = 1 - momentum
             lamb = lr * math.pow(k + 1, 0.5)
@@ -107,14 +109,23 @@ class MADGRAD(torch.optim.Optimizer):
             for p in group["params"]:
                 if p.grad is None:
                     continue
+                # grad = p.grad.data
+                # state = self.state[p]
                 grad = p.grad.data
+                if grad.dtype in {torch.float16, torch.bfloat16}:
+                    grad = grad.float()
                 state = self.state[p]
 
+                p_data_fp32 = p.data
+                if p.data.dtype in {torch.float16, torch.bfloat16}:
+                    p_data_fp32 = p_data_fp32.float()
+
+
                 if "grad_sum_sq" not in state:
-                    state["grad_sum_sq"] = torch.zeros_like(p.data).detach()
-                    state["s"] = torch.zeros_like(p.data).detach()
+                    state["grad_sum_sq"] = torch.zeros_like(p_data_fp32).detach()
+                    state["s"] = torch.zeros_like(p_data_fp32).detach()
                     if momentum != 0:
-                        state["x0"] = torch.clone(p.data).detach()
+                        state["x0"] = torch.clone(p_data_fp32).detach()
 
                 if momentum != 0.0 and grad.is_sparse:
                     raise RuntimeError("momentum != 0 is not compatible with sparse gradients")
@@ -127,13 +138,13 @@ class MADGRAD(torch.optim.Optimizer):
                     if grad.is_sparse:
                         raise RuntimeError("weight_decay option is not compatible with sparse gradients")
 
-                    grad.add_(p.data, alpha=decay)
+                    grad.add_(p_data_fp32, alpha=decay)
 
                 if grad.is_sparse:
                     grad = grad.coalesce()
                     grad_val = grad._values()
 
-                    p_masked = p.sparse_mask(grad)
+                    p_masked = p_data_fp32.sparse_mask(grad)
                     grad_sum_sq_masked = grad_sum_sq.sparse_mask(grad)
                     s_masked = s.sparse_mask(grad)
 
@@ -163,7 +174,7 @@ class MADGRAD(torch.optim.Optimizer):
                     if momentum == 0:
                         # Compute x_0 from other known quantities
                         rms = grad_sum_sq.pow(1 / 3).add_(eps)
-                        x0 = p.data.addcdiv(s, rms, value=1)
+                        x0 = p_data_fp32.addcdiv(s, rms, value=1)
                     else:
                         x0 = state["x0"]
 
@@ -178,20 +189,22 @@ class MADGRAD(torch.optim.Optimizer):
                     s.data.add_(grad, alpha=lamb)
 
                     if decay != 0 and decouple_decay:
-                        p_old = p.data.clone()
+                        p_old = p_data_fp32.clone()
 
                     # Step
                     if momentum == 0:
-                        p.data.copy_(x0.addcdiv(s, rms, value=-1))
+                        p_data_fp32.copy_(x0.addcdiv(s, rms, value=-1))
                     else:
                         z = x0.addcdiv(s, rms, value=-1)
 
                         # p is a moving average of z
-                        p.data.mul_(1 - ck).add_(z, alpha=ck)
+                        p_data_fp32.mul_(1 - ck).add_(z, alpha=ck)
                     
                     if decay != 0 and decouple_decay:
-                        p.data.add_(p_old, alpha=-lr*decay)
+                        p_data_fp32.add_(p_old, alpha=-lr*decay)
 
+                    if p.data.dtype in {torch.float16, torch.bfloat16}:
+                        p.data.copy_(p_data_fp32)
 
         self.state['k'] += 1
         return loss

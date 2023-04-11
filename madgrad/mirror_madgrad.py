@@ -55,8 +55,8 @@ class MirrorMADGRAD(torch.optim.Optimizer):
     ):
         if momentum < 0 or momentum >= 1:
             raise ValueError(f"Momentum {momentum} must be in the range [0,1]")
-        if lr <= 0:
-            raise ValueError(f"Learning rate {lr} must be positive")
+        if lr < 0:
+            raise ValueError(f"Learning rate {lr} must be non-negative")
         if weight_decay < 0:
             raise ValueError(f"Weight decay {weight_decay} must be non-negative")
         if eps < 0:
@@ -96,10 +96,12 @@ class MirrorMADGRAD(torch.optim.Optimizer):
 
         for group in self.param_groups:
             eps = group["eps"]
-            lr = group["lr"] + eps
+            lr = group["lr"]
+            if lr != 0.0:
+                lr = lr + eps # For stability
             decay = group["weight_decay"]
             momentum = group["momentum"]
-            decouple_decay = group["decouple_decay"]
+            decouple_decay = group.get("decouple_decay", False)
 
             ck = 1 - momentum
 
@@ -135,8 +137,6 @@ class MirrorMADGRAD(torch.optim.Optimizer):
                         z.data.add_(z.data, alpha=-lr*decay)
                     else:
                         grad.add_(p_data_fp32, alpha=decay)
-                        
-
 
                 grad_sum_sq.mul_(update_ratio)
                 # Accumulate second moments
