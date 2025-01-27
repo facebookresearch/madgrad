@@ -31,7 +31,7 @@ disclosure of security bugs. In those cases, please go through the process
 outlined on that page and do not file a public issue.
 
 ## Coding Style
-Run black isort and flake8 before submitting a PR.
+Run `black`, `isort`, and `flake8` before submitting a PR.
 ```
 black .
 isort

@@ -3,7 +3,7 @@
 
 A Momentumized, Adaptive, Dual Averaged Gradient Method for Stochastic Optimization
 
-Documentation availiable at https://madgrad.readthedocs.io/en/latest/.
+Documentation available at https://madgrad.readthedocs.io/en/latest/.
 
 
 ``` pip install madgrad ```
